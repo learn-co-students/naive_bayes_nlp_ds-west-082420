@@ -3,9 +3,9 @@
 
 Before returning to our Satire/No Satire example, let's consider an example with a smaller but similar scope.
 
-Suppose we are using an API to gather articles from a news website and grabbing phrases from two different types of articles:  music and politics.
+Suppose we are using an API to gather articles from a news website and grabbing phrases from two different types of articles:  **music** and **politics**.
 
-We have a problem though! Only some of our articles have their category (music or politics). Is there a way we can use Machine Learning to help us label our data quickly?
+We have a problem though! Only some of our articles have their category (music or politics). Is there a way we can use Machine Learning to help us label our data **quickly**?
 
 -------------------------------
 ### Here are our articles
@@ -27,6 +27,8 @@ Let's try and predict one example phrase:
 * "world leaders agreed to fund the stadium"
 
 How can we make a model that labels this for us rather than having to go through by hand?
+
+Let's revisit Bayes Theorem.  Remember, Bayes looks to calculate the probability of a class (c) given the data (x).  To do so, we calculate the **likelihood** (the distribution of our data within a given class) and the **prior** probabiliity of each class (the probability of seeing the class in the population). We are going to ignore the denominator of the right side of the equation in this instance, because, as we will see, we will be finding the ratio of posteriors probabilities, which will cancel out the denominator.
 
 <img src ="./resources/naive_bayes_icon.png">
 
@@ -127,10 +129,6 @@ prior_0 = y_t.value_counts()[0]/len(y_t)
 print(prior_0, prior_1)
 print(np.log(prior_1))
 ```
-
-    0.48576512455516013 0.5142348754448398
-    -0.665075161781259
-
 
 Let's consider the scenario that we would like to isolate satirical news on Facebook so we can flag it.  We do not want to flag real news by mistake. In other words, we want to minimize falls positives.
 
