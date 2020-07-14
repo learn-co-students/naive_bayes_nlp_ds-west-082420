@@ -77,13 +77,42 @@ p_politics = len(politics)/(len(politics) + len(music))
 p_music = len(music)/(len(politics) + len(music))
 ```
 
+
+```python
+# This is always a good idea
+%load_ext autoreload
+%autoreload 2
+
+import os
+import sys
+module_path = os.path.abspath(os.path.join(os.pardir, os.pardir))
+if module_path not in sys.path:
+    sys.path.append(module_path)
+
+mccalister = ['Adam', 'Amanda','Chum', 'Dann',
+ 'Jacob', 'Jason', 'Johnhoy', 'Karim',
+'Leana','Luluva', 'Matt', 'Maximilian','Syd' ]
+
+from src.student_caller import one_random_student
+```
+
+    The autoreload extension is already loaded. To reload it, use:
+      %reload_ext autoreload
+
+
 ### How do you think we should calculate: $ P(phrase | politics) $ ?
 
 
 ```python
-# we need to break the phrases down into individual words
-
+one_random_student(mccalister)
 ```
+
+
+
+
+    'Adam'
+
+
 
  $\large P(phrase | politics) = \prod_{i=1}^{d} P(word_{i} | politics) $
 
@@ -98,9 +127,15 @@ p_music = len(music)/(len(politics) + len(music))
 
 
 ```python
-# we can't have a probability of 0
-
+one_random_student(mccalister)
 ```
+
+
+
+
+    'Syd'
+
+
 
 ## Laplace Smoothing
  $\large P(word_{i} | politics) = \frac{\#\ of\ word_{i}\ in\ politics\ art. + \alpha} {\#\ of\ total\ words\ in\ politics\ art. + \alpha d} $
@@ -116,13 +151,19 @@ This correction process is called Laplace smoothing:
 
 <img src="./resources/IMG_0041.jpg">
 
-p(phrase|politics)
-
 
 ```python
 def vocab_maker(category):
-    """returns the vocabulary for a given type of article"""
-    vocab_category = set()
+    """
+    parameters: category is a list containing all the articles
+    of a given category.
+    
+    returns the vocabulary for a given type of article
+    
+    """
+    
+    vocab_category = set() # will filter down to only unique words
+    
     for art in category:
         words = art.split()
         for word in words:
@@ -131,12 +172,12 @@ def vocab_maker(category):
         
 voc_music = vocab_maker(music)
 voc_pol = vocab_maker(politics)
-# total_vocabulary = voc_music.union(voc_pol)
 
 ```
 
 
 ```python
+# These are all the unique words in the music category
 voc_music
 ```
 
@@ -164,35 +205,67 @@ voc_music
 
 
 ```python
-voc_music
+# These are all the unique words in the politics category
+voc_pol
 ```
 
 
 
 
     {'a',
-     'arena',
-     'band',
-     'disagreed',
-     'for',
+     'agreed',
+     'close',
+     'compromise',
+     'election',
+     'lask',
      'leaders',
+     'met',
+     'officials',
      'on',
-     'out',
-     'played',
-     'popular',
-     'sold',
-     'song',
-     'sound',
-     'stadium',
      'the',
-     'was'}
+     'was',
+     'week',
+     'world'}
 
 
 
 
 ```python
+# The union of the two sets gives us the unique words across both article groups
 voc_all = voc_music.union(voc_pol)
+voc_all
 ```
+
+
+
+
+    {'a',
+     'agreed',
+     'arena',
+     'band',
+     'close',
+     'compromise',
+     'disagreed',
+     'election',
+     'for',
+     'lask',
+     'leaders',
+     'met',
+     'officials',
+     'on',
+     'out',
+     'played',
+     'popular',
+     'sold',
+     'song',
+     'sound',
+     'stadium',
+     'the',
+     'was',
+     'week',
+     'world'}
+
+
 
 
 ```python
@@ -201,21 +274,40 @@ total_music_count = len(voc_music)
 total_politics_count = len(voc_pol)
 ```
 
+Let's remind ourselves of the goal, to see the posterior likelihood of the class politics given our phrase. 
+
+> P(politics | leaders agreed to fund the stadium)
+
 
 ```python
-#P(politics | leaders agreed to fund the stadium)
+music
 ```
+
+
+
+
+    ['the song was popular',
+     'band leaders disagreed on sound',
+     'played for a sold out arena stadium']
+
+
 
 
 ```python
 def find_number_words_in_category(phrase,category):
     statement = phrase.split()
+    
+    # category is a list of the raw documents of each category
     str_category=' '.join(category)
     cat_word_list = str_category.split()
     word_count = defaultdict(int)
+    
+    # loop through each word in the phrase
     for word in statement:
+        # loop through each word in the category
         for art_word in cat_word_list:
             if word == art_word:
+                # count the number of times the phrase word occurs in the category
                 word_count[word] +=1
             else:
                 word_count[word]
@@ -276,7 +368,12 @@ test_politic_word_count
 
 ```python
 def find_likelihood(category_count,test_category_count,alpha):
+    # The numerator will be the product of all the counts 
+    # with the smoothing factor (alpha) to make sure the probability is not zero'd out
     num = np.product(np.array(list(test_category_count.values())) + alpha)
+    
+    # The denominator will be the same for each word (total category count + total vocab + alph)
+    # so we raise it to the power of the length of the test category
     denom = (category_count + total_vocab_count*alpha)**(len(test_category_count))
     
     return num/denom
@@ -503,6 +600,8 @@ X_t, X_val, y_t, y_val = train_test_split(token_docs, y_train, test_size=.25, ra
 
 ```python
 cv = CountVectorizer(max_features=5)
+
+# Just like with our scaler, we fit our Count Vectorizer on the training set
 X_t_vec = cv.fit_transform(X_t)
 X_t_vec  = pd.DataFrame.sparse.from_spmatrix(X_t_vec)
 X_t_vec.columns = sorted(cv.vocabulary_)
@@ -638,8 +737,13 @@ X_t_vec
 
 
 
+# Knowledge Check
+
+The word say shows up in our count vectorizer, but it is excluded in the stopwords.  What is going on?
+
 
 ```python
+# We then transform the validation set.  Do not refit the vectorizer
 X_val_vec = cv.transform(X_val)
 X_val_vec  = pd.DataFrame.sparse.from_spmatrix(X_val_vec)
 X_val_vec.columns = sorted(cv.vocabulary_)
@@ -647,29 +751,9 @@ X_val_vec.set_index(y_val.index, inplace=True)
 
 ```
 
-# Knowledge Check
-
-The word say shows up in our count vectorizer, but it is excluded in the stopwords.  What is going on?
-
 # Multinomial Naive Bayes
 
-Let's break down MNB with our X_t_vec, and y_t arrays in mind.
-
-What are the priors for each class as calculated from these arrays?
-
-
-```python
-np.log(prior_0)
-```
-
-
-
-
-    -0.665075161781259
-
-
-
-Let's train our model.
+Now let's fit the the Multinomial Naive Bayes Classifier on our training data
 
 
 ```python
@@ -678,178 +762,46 @@ from sklearn.naive_bayes import MultinomialNB
 mnb = MultinomialNB()
 
 mnb.fit(X_t_vec, y_t)
-mnb.__dict__
 ```
 
 
 
 
-    {'alpha': 1.0,
-     'fit_prior': True,
-     'class_prior': None,
-     'n_features_': 5,
-     'classes_': array([0, 1]),
-     'class_count_': array([273., 289.]),
-     'feature_count_': array([[ 211., 1419.,  371.,  283.,  348.],
-            [ 385.,  241.,  111.,  152.,  264.]]),
-     'feature_log_prob_': array([[-2.52081091, -0.61898504, -1.95850333, -2.22842295, -2.02232526],
-            [-1.09861229, -1.56551193, -2.33595079, -2.02401174, -1.47471983]]),
-     'class_log_prior_': array([-0.72203005, -0.66507516])}
+    MultinomialNB(alpha=1.0, class_prior=None, fit_prior=True)
 
 
 
 
 ```python
-# https://nlp.stanford.edu/IR-book/html/htmledition/naive-bayes-text-classification-1.html
-```
+#What should our priors for each class be?
 
-
-```python
-random_sample = X_val_vec.sample(1, random_state=40)
-random_sample.head()
+one_random_student(mccalister)
 ```
 
 
 
 
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
+    'Jacob'
 
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>people</th>
-      <th>say</th>
-      <th>state</th>
-      <th>trump</th>
-      <th>year</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>520</th>
-      <td>1</td>
-      <td>7</td>
-      <td>6</td>
-      <td>0</td>
-      <td>1</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-Our Likelihoods would look like so:
-
-$$ \Large P(satire|count\_people, count\_say...count\_year)$$
-
-$$ \Large P(not\_satire|count\_people, count\_go...count\_year)$$
-
-
-```python
-likelihood_nosat = mnb.feature_log_prob_[0]*random_sample
-likelihood_sat =  mnb.feature_log_prob_[1]*random_sample
-likelihood_nosat = likelihood_nosat.agg(sum, axis=1)
-likelihood_sat = likelihood_sat.agg(sum, axis=1)
-
-print(likelihood_nosat, likelihood_sat)
-```
-
-    520   -20.627051
-    dtype: float64 520   -27.54762
-    dtype: float64
 
 
 
 ```python
-likelihood_nosat + mnb.class_log_prior_[0]
+mnb.class_log_prior_
 ```
 
 
 
 
-    520   -21.349081
-    dtype: float64
+    array([-0.72203005, -0.66507516])
 
 
 
 
 ```python
-likelihood_sat + mnb.class_log_prior_[1]
-```
-
-
-
-
-    520   -28.212696
-    dtype: float64
-
-
-
-
-```python
-mnb.predict(random_sample)
-```
-
-
-
-
-    array([0])
-
-
-
-
-```python
-y_val.loc[random_sample.index]
-```
-
-
-
-
-    520    0
-    Name: target, dtype: int64
-
-
-
-
-```python
+from sklearn.metrics import accuracy_score, precision_score, confusion_matrix
 
 y_hat = mnb.predict(X_val_vec)
-y_hat
-```
-
-
-
-
-    array([0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0,
-           1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0,
-           1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0,
-           1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0,
-           0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0,
-           0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1,
-           0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1,
-           1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1,
-           1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0])
-
-
-
-
-```python
-from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
-
 accuracy_score(y_val, y_hat)
 ```
 
@@ -860,17 +812,7 @@ accuracy_score(y_val, y_hat)
 
 
 
-
-```python
-f1_score(y_val, y_hat)
-```
-
-
-
-
-    0.8202247191011236
-
-
+Let's consider the scenario that we would like to isolate satirical news on Facebook so we can flag it.  We do not want to flag real news by mistake. In other words, we want to minimize falls positives.
 
 
 ```python
@@ -885,9 +827,21 @@ confusion_matrix(y_val, y_hat)
 
 
 
-That performs very well for only having 5 features.
 
-Let's see what happens when we increase our feature set
+```python
+precision_score(y_val, y_hat)
+```
+
+
+
+
+    0.8202247191011236
+
+
+
+That's pretty good for a five word vocabulary.
+
+Let's see what happens when we increase don't restrict our vocabulary
 
 
 ```python
@@ -896,18 +850,8 @@ X_t_vec = cv.fit_transform(X_t)
 X_t_vec  = pd.DataFrame.sparse.from_spmatrix(X_t_vec)
 X_t_vec.columns = sorted(cv.vocabulary_)
 X_t_vec.set_index(y_t.index, inplace=True)
-X_t_vec.shape
-```
 
 
-
-
-    (562, 14819)
-
-
-
-
-```python
 X_val_vec = cv.transform(X_val)
 X_val_vec  = pd.DataFrame.sparse.from_spmatrix(X_val_vec)
 X_val_vec.columns = sorted(cv.vocabulary_)
@@ -920,50 +864,6 @@ mnb = MultinomialNB()
 
 mnb.fit(X_t_vec, y_t)
 y_hat = mnb.predict(X_val_vec)
-y_hat
-```
-
-
-
-
-    array([1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0,
-           0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1,
-           1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1,
-           1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1,
-           0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0,
-           0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-           0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1,
-           0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0,
-           0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0])
-
-
-
-
-```python
-accuracy_score(y_val, y_hat)
-```
-
-
-
-
-    0.9627659574468085
-
-
-
-
-```python
-f1_score(y_val, y_hat)
-```
-
-
-
-
-    0.96045197740113
-
-
-
-
-```python
 confusion_matrix(y_val, y_hat)
 ```
 
@@ -975,7 +875,31 @@ confusion_matrix(y_val, y_hat)
 
 
 
-That performs very well. 
+Wow! Look how well that performed. 
+
+
+```python
+precision_score(y_val, y_hat)
+```
+
+
+
+
+    0.9659090909090909
+
+
+
+
+```python
+len(cv.vocabulary_)
+```
+
+
+
+
+    14819
+
+
 
 Let's see whether or not we can maintain that level of accuracy with less words.
 
@@ -997,175 +921,140 @@ mnb = MultinomialNB()
 mnb.fit(X_t_vec, y_t)
 y_hat = mnb.predict(X_val_vec)
 
-f1_score(y_val, y_hat)
+precision_score(y_val, y_hat)
 ```
 
 
 
 
-    0.9378531073446328
+    0.9431818181818182
 
 
 
 
 ```python
-X_t_vec.shape
+len(cv.vocabulary_)
 ```
 
 
 
 
-    (562, 650)
+    650
 
 
+
+
+```python
+# Now let's see what happens with TF-IDF
+```
+
+
+```python
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+tfidf = TfidfVectorizer()
+X_t_vec = tfidf.fit_transform(X_t)
+X_t_vec  = pd.DataFrame.sparse.from_spmatrix(X_t_vec)
+X_t_vec.columns = sorted(tfidf.vocabulary_)
+X_t_vec.set_index(y_t.index, inplace=True)
+
+X_val_vec = tfidf.transform(X_val)
+X_val_vec  = pd.DataFrame.sparse.from_spmatrix(X_val_vec)
+X_val_vec.columns = sorted(tfidf.vocabulary_)
+X_val_vec.set_index(y_val.index, inplace=True)
+
+mnb = MultinomialNB()
+
+mnb.fit(X_t_vec, y_t)
+y_hat = mnb.predict(X_val_vec)
+
+precision_score(y_val, y_hat)
+```
+
+
+
+
+    0.9444444444444444
+
+
+
+TFIDF does not necessarily perform better than CV.  It is just a tool in our toolbelt which we can try out and compare the performance.  
+
+
+```python
+len(tfidf.vocabulary_)
+```
+
+
+
+
+    14819
+
+
+
+
+```python
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+tfidf = TfidfVectorizer(min_df=.05, max_df=.95)
+X_t_vec = tfidf.fit_transform(X_t)
+X_t_vec  = pd.DataFrame.sparse.from_spmatrix(X_t_vec)
+X_t_vec.columns = sorted(tfidf.vocabulary_)
+X_t_vec.set_index(y_t.index, inplace=True)
+
+X_val_vec = tfidf.transform(X_val)
+X_val_vec  = pd.DataFrame.sparse.from_spmatrix(X_val_vec)
+X_val_vec.columns = sorted(tfidf.vocabulary_)
+X_val_vec.set_index(y_val.index, inplace=True)
+
+mnb = MultinomialNB()
+
+mnb.fit(X_t_vec, y_t)
+y_hat = mnb.predict(X_val_vec)
+
+precision_score(y_val, y_hat)
+```
+
+
+
+
+    0.9651162790697675
+
+
+
+
+```python
+len(tfidf.vocabulary_)
+```
+
+
+
+
+    650
+
+
+
+Let's compare MNB to one of our classifiers that has a track record of high performance, Random Forest.
 
 
 ```python
 from sklearn.ensemble import RandomForestClassifier
 
-rf = RandomForestClassifier()
+rf = RandomForestClassifier(n_estimators=1000, max_features=5, max_depth=5)
 rf.fit(X_t_vec, y_t)
-rf.score(X_val_vec, y_val)
+y_hat = rf.predict(X_val_vec)
+precision_score(y_val, y_hat)
 ```
 
 
 
 
-    0.9680851063829787
+    0.9468085106382979
 
 
 
-# Bonus NLP EDA
+Both random forest and mnb perform comparably, however, mnb is lightweight as far as computational power and speed.  For real time predictions, we may choose MNB over random forest because the classifications can be performed quickly.
 
-
-```python
-policies = pd.read_csv('data/2020_policies_feb_24.csv')
-policies.head()
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>Unnamed: 0</th>
-      <th>name</th>
-      <th>policy</th>
-      <th>candidate</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>0</td>
-      <td>100% Clean Energy for America</td>
-      <td>As published on Medium on September 3rd, 2019:...</td>
-      <td>warren</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>1</td>
-      <td>A Comprehensive Agenda to Boost America’s Smal...</td>
-      <td>Small businesses are the heart of our economy....</td>
-      <td>warren</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>2</td>
-      <td>A Fair and Welcoming Immigration System</td>
-      <td>As published on Medium on July 11th, 2019:\nIm...</td>
-      <td>warren</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>3</td>
-      <td>A Fair Workweek for America’s Part-Time Workers</td>
-      <td>Working families all across the country are ge...</td>
-      <td>warren</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>4</td>
-      <td>A Great Public School Education for Every Student</td>
-      <td>I attended public school growing up in Oklahom...</td>
-      <td>warren</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-# Question set 1:
-After remove punctuation and ridding the text of numbers and other low semantic value text, answer the following questions.
-
-1. Which document has the greatest average word length?
-2. What is the average word length of the entire corpus?
-3. Which is greater, the average word length for the documents in the Warren or Sanders campaigns? 
-
-
-
-```python
-
-```
-
-Proceed through the remaining standard preprocessing steps in whatever manner you see fit. Make sure to:
-- Make text lowercase
-- Remove stopwords
-- Stem or lemmatize
-
-
-```python
-
-```
-
-# Question set 2:
-1. What are the most common words across the corpus?
-2. What are the most common words across each campaign?
-
-> in order to answer these questions, you may find the nltk FreqDist function helpful.
-
-3. Use the FreqDist plot method to make a frequency plot for the corpus as a whole.  
-4. Based on that plot, should any more words be added to our stopword library?
-
-
-
-```python
-
-```
-
-# Question set 3:
-
-1. What are the most common bigrams in the corpus?
-2. What are the most common bigrams in the Warren campain and the Sanders campaign, respectively?
-3. Answer questions 1 and 2 for trigrams.
-
-> Hint: You may find it useful to leverage the nltk.collocations functions
-
-
-```python
-
-```
-
-After answering the questions, transform the data into a document term matrix using either CountVectorizor or TFIDF.  
-
-Run a Multinomial Naive Bayes classifier and judge how accurately our models can separate documents from the two campaigns.
 
 
 ```python
