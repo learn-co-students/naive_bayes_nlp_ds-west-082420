@@ -51,11 +51,23 @@ This is essentially the distribution of the probability of either type of articl
 
 ### How do you think we should calculate: $ P(phrase | politics) $ ?
 
+
+```python
+# we need to break the phrases down into individual words
+
+```
+
  $\large P(phrase | politics) = \prod_{i=1}^{d} P(word_{i} | politics) $
 
  $\large P(word_{i} | politics) = \frac{\#\ of\ word_{i}\ in\ politics\ art.} {\#\ of\ total\ words\ in\ politics\ art.} $
 
 ### Can you foresee any issues with this?
+
+
+```python
+# we can't have a probability of 0
+
+```
 
 ## Laplace Smoothing
  $\large P(word_{i} | politics) = \frac{\#\ of\ word_{i}\ in\ politics\ art. + \alpha} {\#\ of\ total\ words\ in\ politics\ art. + \alpha d} $
@@ -71,7 +83,9 @@ This correction process is called Laplace smoothing:
 
 <img src="./resources/IMG_0041.jpg">
 
-p(phrase|politics)
+Let's remind ourselves of the goal, to see the posterior likelihood of the class politics given our phrase. 
+
+> P(politics | leaders agreed to fund the stadium)
 
  $ P(politics | article) = P(politics) x \prod_{i=1}^{d} P(word_{i} | politics) $
 
@@ -103,70 +117,34 @@ The word say shows up in our count vectorizer, but it is excluded in the stopwor
 
 # Multinomial Naive Bayes
 
-Let's break down MNB with our X_t_vec, and y_t arrays in mind.
-
-What are the priors for each class as calculated from these arrays?
+Now let's fit the the Multinomial Naive Bayes Classifier on our training data
 
 
 ```python
 
-prior_1 = y_t.value_counts()[0]/len(y_t)
-prior_0 = y_t.value_counts()[1]/len(y_t)
+prior_1 = y_t.value_counts()[1]/len(y_t)
+prior_0 = y_t.value_counts()[0]/len(y_t)
 print(prior_0, prior_1)
+print(np.log(prior_1))
 ```
 
-    0.5142348754448398 0.48576512455516013
+    0.48576512455516013 0.5142348754448398
+    -0.665075161781259
 
 
-Let's train our model.
+Let's consider the scenario that we would like to isolate satirical news on Facebook so we can flag it.  We do not want to flag real news by mistake. In other words, we want to minimize falls positives.
 
-Our Likelihoods would look like so:
+That's pretty good for a five word vocabulary.
 
-$$ \Large P(satire|count\_people, count\_say...count\_year)$$
+Let's see what happens when we increase don't restrict our vocabulary
 
-$$ \Large P(not\_satire|count\_people, count\_go...count\_year)$$
-
-That performs very well for only having 5 features.
-
-Let's see what happens when we increase our feature set
-
-That performs very well. 
+Wow! Look how well that performed. 
 
 Let's see whether or not we can maintain that level of accuracy with less words.
 
-# Bonus NLP EDA
+TFIDF does not necessarily perform better than CV.  It is just a tool in our toolbelt which we can try out and compare the performance.  
 
-# Question set 1:
-After remove punctuation and ridding the text of numbers and other low semantic value text, answer the following questions.
+Let's compare MNB to one of our classifiers that has a track record of high performance, Random Forest.
 
-1. Which document has the greatest average word length?
-2. What is the average word length of the entire corpus?
-3. Which is greater, the average word length for the documents in the Warren or Sanders campaigns? 
+Both random forest and mnb perform comparably, however, mnb is lightweight as far as computational power and speed.  For real time predictions, we may choose MNB over random forest because the classifications can be performed quickly.
 
-
-Proceed through the remaining standard preprocessing steps in whatever manner you see fit. Make sure to:
-- Make text lowercase
-- Remove stopwords
-- Stem or lemmatize
-
-# Question set 2:
-1. What are the most common words across the corpus?
-2. What are the most common words across each campaign?
-
-> in order to answer these questions, you may find the nltk FreqDist function helpful.
-
-3. Use the FreqDist plot method to make a frequency plot for the corpus as a whole.  
-4. Based on that plot, should any more words be added to our stopword library?
-
-
-# Question set 3:
-
-1. What are the most common bigrams in the corpus?
-2. What are the most common bigrams in the Warren campain and the Sanders campaign, respectively?
-3. Answer questions 1 and 2 for trigrams.
-
-> Hint: You may find it useful to leverage the nltk.collocations functions
-
-After answering the questions, transform the data into a document term matrix using either CountVectorizor or TFIDF.  
-
-Run a Multinomial Naive Bayes classifier and judge how accurately our models can separate documents from the two campaigns.
