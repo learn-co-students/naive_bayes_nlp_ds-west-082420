@@ -1,11 +1,30 @@
 
 # Naive Bayes and NLP Modeling
 
+
+```python
+# This is always a good idea
+%load_ext autoreload
+%autoreload 2
+
+from src.student_caller import one_random_student, three_random_students
+from src.student_list import student_first_names
+```
+
+
+```python
+"In a standard normal curve, what z-score is associated with the 97.5th percentile?"
+one_random_student(student_first_names)
+```
+
+    Reuben
+
+
 Before returning to our Satire/No Satire example, let's consider an example with a smaller but similar scope.
 
 Suppose we are using an API to gather articles from a news website and grabbing phrases from two different types of articles:  **music** and **politics**.
 
-We have a problem though! Only some of our articles have their category (music or politics). Is there a way we can use Machine Learning to help us label our data **quickly**?
+We have a problem though! Only some of our articles are labeled with a category (music or politics). Is there a way we can use Machine Learning to help us label our data **quickly**?
 
 -------------------------------
 ### Here are our articles
@@ -43,13 +62,6 @@ politics = ['world leaders met lask week',
 test_statement = 'world leaders agreed to fund the stadium'
 ```
 
-
-```python
-#labels : 'music' 'politics'
-#features: words
-test_statement_2 = 'officials met at the arena'
-```
-
 Let's revisit Bayes Theorem.  Remember, Bayes looks to calculate the probability of a class (c) given the data (x).  To do so, we calculate the **likelihood** (the distribution of our data within a given class) and the **prior** probabiliity of each class (the probability of seeing the class in the population). We are going to ignore the denominator of the right side of the equation in this instance, because, as we will see, we will be finding the ratio of posteriors probabilities, which will cancel out the denominator.
 
 <img src ="./resources/naive_bayes_icon.png">
@@ -79,38 +91,21 @@ p_politics = len(politics)/(len(politics) + len(music))
 p_music = len(music)/(len(politics) + len(music))
 ```
 
-
-```python
-# This is always a good idea
-%load_ext autoreload
-%autoreload 2
-
-import os
-import sys
-module_path = os.path.abspath(os.path.join(os.pardir, os.pardir))
-if module_path not in sys.path:
-    sys.path.append(module_path)
-
-mccalister = ['Adam', 'Amanda','Chum', 'Dann',
- 'Jacob', 'Jason', 'Johnhoy', 'Karim',
-'Leana','Luluva', 'Matt', 'Maximilian','Syd' ]
-
-from src.student_caller import one_random_student
-```
-
 ### How do you think we should calculate: $ P(phrase | politics) $ ?
 
 
 ```python
-one_random_student(mccalister)
+one_random_student(student_first_names)
 ```
+
+    Andrew
+
 
  $\large P(phrase | politics) = \prod_{i=1}^{d} P(word_{i} | politics) $
 
+The likelihood of a class label given the phrase is the joint probability distribution of the individual words, or in other words the product of their individual probabilities of appearing in a class.
 
-```python
-### We need to make a *Naive* assumption.
-```
+We need to make a *Naive* assumption.  Naive in this contexts means that we assume that the probabilities of each word appearing are independent from the other words in the phrase.  For example,  the probability of the word 'rock' would increase if we found the word 'classic' in the text.  Naive bayes does not take this conditional probability into account.
 
  $\large P(word_{i} | politics) = \frac{\#\ of\ word_{i}\ in\ politics\ art.} {\#\ of\ total\ words\ in\ politics\ art.} $
 
@@ -118,8 +113,11 @@ one_random_student(mccalister)
 
 
 ```python
-one_random_student(mccalister)
+one_random_student(student_first_names)
 ```
+
+    Sam
+
 
 ## Laplace Smoothing
  $\large P(word_{i} | politics) = \frac{\#\ of\ word_{i}\ in\ politics\ art. + \alpha} {\#\ of\ total\ words\ in\ politics\ art. + \alpha d} $
@@ -166,10 +164,52 @@ voc_music
 ```
 
 
+
+
+    {'a',
+     'arena',
+     'band',
+     'disagreed',
+     'for',
+     'leaders',
+     'on',
+     'out',
+     'played',
+     'popular',
+     'sold',
+     'song',
+     'sound',
+     'stadium',
+     'the',
+     'was'}
+
+
+
+
 ```python
 # These are all the unique words in the politics category
 voc_pol
 ```
+
+
+
+
+    {'a',
+     'agreed',
+     'close',
+     'compromise',
+     'election',
+     'lask',
+     'leaders',
+     'met',
+     'officials',
+     'on',
+     'the',
+     'was',
+     'week',
+     'world'}
+
+
 
 
 ```python
@@ -177,6 +217,37 @@ voc_pol
 voc_all = voc_music.union(voc_pol)
 voc_all
 ```
+
+
+
+
+    {'a',
+     'agreed',
+     'arena',
+     'band',
+     'close',
+     'compromise',
+     'disagreed',
+     'election',
+     'for',
+     'lask',
+     'leaders',
+     'met',
+     'officials',
+     'on',
+     'out',
+     'played',
+     'popular',
+     'sold',
+     'song',
+     'sound',
+     'stadium',
+     'the',
+     'was',
+     'week',
+     'world'}
+
+
 
 
 ```python
@@ -193,6 +264,15 @@ Let's remind ourselves of the goal, to see the posterior likelihood of the class
 ```python
 music
 ```
+
+
+
+
+    ['the song was popular',
+     'band leaders disagreed on sound',
+     'played for a sold out arena stadium']
+
+
 
 
 ```python
@@ -230,6 +310,20 @@ test_music_word_count
 ```
 
 
+
+
+    defaultdict(int,
+                {'world': 0,
+                 'leaders': 1,
+                 'agreed': 0,
+                 'to': 0,
+                 'fund': 0,
+                 'the': 1,
+                 'stadium': 1})
+
+
+
+
 ```python
 test_politic_word_count = find_number_words_in_category(test_statement,politics)
 ```
@@ -238,6 +332,20 @@ test_politic_word_count = find_number_words_in_category(test_statement,politics)
 ```python
 test_politic_word_count
 ```
+
+
+
+
+    defaultdict(int,
+                {'world': 1,
+                 'leaders': 1,
+                 'agreed': 1,
+                 'to': 0,
+                 'fund': 0,
+                 'the': 2,
+                 'stadium': 0})
+
+
 
 
 ```python
@@ -269,6 +377,10 @@ print(likelihood_m)
 print(likelihood_p)
 ```
 
+    4.107740405680756e-11
+    1.748875897714495e-10
+
+
  $ P(politics | article) = P(politics) x \prod_{i=1}^{d} P(word_{i} | politics) $
 
 #### Deteriming the winner of our model:
@@ -286,6 +398,13 @@ p_music = .5
 # p(politics|article)  > p(music|article)
 likelihood_p * p_politics  > likelihood_m * p_music
 ```
+
+
+
+
+    True
+
+
 
 Many times, the probabilities we end up are exceedingly small, so we can transform them using logs to save on computation speed
 
@@ -306,6 +425,63 @@ import numpy as np
 corpus = pd.read_csv('data/satire_nosatire.csv')
 corpus.head()
 ```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>body</th>
+      <th>target</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Noting that the resignation of James Mattis as...</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Desperate to unwind after months of nonstop wo...</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Nearly halfway through his presidential term, ...</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Attempting to make amends for gross abuses of ...</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Decrying the Senate’s resolution blaming the c...</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
 
 Like always, we will perform a train test split...
 
@@ -420,6 +596,130 @@ X_t_vec.set_index(y_t.index, inplace=True)
 X_t_vec
 ```
 
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>people</th>
+      <th>say</th>
+      <th>state</th>
+      <th>trump</th>
+      <th>year</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>159</th>
+      <td>3</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>246</th>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>7</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>640</th>
+      <td>0</td>
+      <td>4</td>
+      <td>1</td>
+      <td>0</td>
+      <td>4</td>
+    </tr>
+    <tr>
+      <th>809</th>
+      <td>2</td>
+      <td>10</td>
+      <td>2</td>
+      <td>0</td>
+      <td>7</td>
+    </tr>
+    <tr>
+      <th>130</th>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>148</th>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>300</th>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>356</th>
+      <td>1</td>
+      <td>3</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>36</th>
+      <td>1</td>
+      <td>4</td>
+      <td>0</td>
+      <td>0</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>895</th>
+      <td>1</td>
+      <td>7</td>
+      <td>0</td>
+      <td>0</td>
+      <td>6</td>
+    </tr>
+  </tbody>
+</table>
+<p>562 rows × 5 columns</p>
+</div>
+
+
+
 # Knowledge Check
 
 The word say shows up in our count vectorizer, but it is excluded in the stopwords.  What is going on?
@@ -448,16 +748,33 @@ mnb.fit(X_t_vec, y_t)
 ```
 
 
+
+
+    MultinomialNB(alpha=1.0, class_prior=None, fit_prior=True)
+
+
+
+
 ```python
 #What should our priors for each class be?
 
-one_random_student(mccalister)
+one_random_student(student_first_names)
 ```
+
+    Karim
+
 
 
 ```python
 mnb.class_log_prior_
 ```
+
+
+
+
+    array([-0.72203005, -0.66507516])
+
+
 
 
 ```python
@@ -467,6 +784,13 @@ y_hat = mnb.predict(X_val_vec)
 accuracy_score(y_val, y_hat)
 ```
 
+
+
+
+    0.8297872340425532
+
+
+
 Let's consider the scenario that we would like to isolate satirical news on Facebook so we can flag it.  We do not want to flag real news by mistake. In other words, we want to minimize falls positives.
 
 
@@ -475,9 +799,24 @@ confusion_matrix(y_val, y_hat)
 ```
 
 
+
+
+    array([[83, 16],
+           [16, 73]])
+
+
+
+
 ```python
 precision_score(y_val, y_hat)
 ```
+
+
+
+
+    0.8202247191011236
+
+
 
 That's pretty good for a five word vocabulary.
 
@@ -507,6 +846,14 @@ y_hat = mnb.predict(X_val_vec)
 confusion_matrix(y_val, y_hat)
 ```
 
+
+
+
+    array([[96,  3],
+           [ 4, 85]])
+
+
+
 Wow! Look how well that performed. 
 
 
@@ -515,9 +862,23 @@ precision_score(y_val, y_hat)
 ```
 
 
+
+
+    0.9659090909090909
+
+
+
+
 ```python
 len(cv.vocabulary_)
 ```
+
+
+
+
+    14819
+
+
 
 Let's see whether or not we can maintain that level of accuracy with less words.
 
@@ -543,9 +904,23 @@ precision_score(y_val, y_hat)
 ```
 
 
+
+
+    0.9431818181818182
+
+
+
+
 ```python
 len(cv.vocabulary_)
 ```
+
+
+
+
+    650
+
+
 
 
 ```python
@@ -575,12 +950,26 @@ y_hat = mnb.predict(X_val_vec)
 precision_score(y_val, y_hat)
 ```
 
+
+
+
+    0.9444444444444444
+
+
+
 TFIDF does not necessarily perform better than CV.  It is just a tool in our toolbelt which we can try out and compare the performance.  
 
 
 ```python
 len(tfidf.vocabulary_)
 ```
+
+
+
+
+    14819
+
+
 
 
 ```python
@@ -606,9 +995,23 @@ precision_score(y_val, y_hat)
 ```
 
 
+
+
+    0.9651162790697675
+
+
+
+
 ```python
 len(tfidf.vocabulary_)
 ```
+
+
+
+
+    650
+
+
 
 Let's compare MNB to one of our classifiers that has a track record of high performance, Random Forest.
 
