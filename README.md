@@ -1,11 +1,25 @@
 
 # Naive Bayes and NLP Modeling
 
+
+```python
+"""
+1.96
+"""
+```
+
+
+
+
+    '\n1.96\n'
+
+
+
 Before returning to our Satire/No Satire example, let's consider an example with a smaller but similar scope.
 
 Suppose we are using an API to gather articles from a news website and grabbing phrases from two different types of articles:  **music** and **politics**.
 
-We have a problem though! Only some of our articles have their category (music or politics). Is there a way we can use Machine Learning to help us label our data **quickly**?
+We have a problem though! Only some of our articles are labeled with a category (music or politics). Is there a way we can use Machine Learning to help us label our data **quickly**?
 
 -------------------------------
 ### Here are our articles
@@ -60,6 +74,10 @@ This is essentially the distribution of the probability of either type of articl
 ```
 
  $\large P(phrase | politics) = \prod_{i=1}^{d} P(word_{i} | politics) $
+
+The likelihood of a class label given the phrase is the joint probability distribution of the individual words, or in other words the product of their individual probabilities of appearing in a class.
+
+We need to make a *Naive* assumption.  Naive in this contexts means that we assume that the probabilities of each word appearing are independent from the other words in the phrase.  For example,  the probability of the word 'rock' would increase if we found the word 'classic' in the text.  Naive bayes does not take this conditional probability into account.
 
  $\large P(word_{i} | politics) = \frac{\#\ of\ word_{i}\ in\ politics\ art.} {\#\ of\ total\ words\ in\ politics\ art.} $
 
@@ -129,6 +147,10 @@ prior_0 = y_t.value_counts()[0]/len(y_t)
 print(prior_0, prior_1)
 print(np.log(prior_1))
 ```
+
+    0.48576512455516013 0.5142348754448398
+    -0.665075161781259
+
 
 Let's consider the scenario that we would like to isolate satirical news on Facebook so we can flag it.  We do not want to flag real news by mistake. In other words, we want to minimize falls positives.
 
